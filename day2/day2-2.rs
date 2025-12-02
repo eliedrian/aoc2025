@@ -1,23 +1,54 @@
 use std::env;
 use std::fs;
 
-fn valid_id(id: &u64, parts: &u32) -> bool {
-    let length: u32 = id.ilog10() + 1;
+fn digit_count(num: &u64) -> u32 {
+    match num {
+        0 => 0,
+        _ => num.ilog10() + 1
+    }
+}
 
-    for i in 2..length {
-        let step_size = length / i;
-        for j in 0..step_size {
+fn invalid_id(id: &u64) -> bool {
+    let length: u32 = digit_count(id);
+
+    let mut invalid = false;
+
+    for i in 2..=length {
+        invalid = true;
+        let slice_size = length / i;
+        let mut x: u64 = *id;
+        let current_pattern = x.rem_euclid(10u64.pow(slice_size));
+        while x > 0 {
+            let slice = x.rem_euclid(10u64.pow(slice_size));
+
+            if digit_count(&slice) != slice_size {
+                invalid = false;
+                break;
+            }
+
+            x = x / 10u64.pow(slice_size);
+
+            if current_pattern != slice {
+                invalid = false;
+                break;
+            }
+        }
+
+        // id is still invalid after a pass, must mean it has repeating digits
+        if invalid {
+            break;
+        }
+        
+        // checked smallest slice size, break early
+        if slice_size == 1 {
+            break;
         }
     }
 
-    let slice_a: u64 = id / 10u64.pow(midpoint);
-    let slice_b: u64 = id.rem_euclid(10u64.pow(midpoint));
-
-    if slice_a != slice_b {
-
-    } else {
-        true
+    if invalid {
+        println!("invalid: {id}");
     }
+    invalid
 }
 
 fn select_invalid_ids(range: Option<(&str, &str)>) -> Vec<String> {
@@ -25,7 +56,7 @@ fn select_invalid_ids(range: Option<(&str, &str)>) -> Vec<String> {
         Some((start, end)) => {
             let s: u64 = start.parse().unwrap();
             let e: u64 = end.trim().parse().unwrap();
-            (s..e).filter(valid_id)
+            (s..=e).filter(invalid_id)
                 .map(|id| id.to_string()).collect::<Vec<String>>()
         },
         _ => vec![]
