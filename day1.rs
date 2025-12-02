@@ -40,12 +40,18 @@ fn main() -> ExitCode {
 
         let intermediate_code = current_safe_code + signed_count;
 
+        // moving left from 0 would count as a pass otherwise, subtract a pass now
         if current_safe_code == 0 && *signed_count < 0 {
             passes -= 1;
         }
 
-
         passes += (intermediate_code.div_euclid(100)).abs();
+
+        // if we land on a multiple of 100, and we are moving to the left, pass count would not be
+        // updated enough
+        if intermediate_code % 100 == 0 && *signed_count < 0 {
+            passes += 1;
+        }
 
 
         current_safe_code = intermediate_code.rem_euclid(100);
