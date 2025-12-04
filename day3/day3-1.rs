@@ -10,8 +10,6 @@ fn max(s: &str) -> (usize, u32) {
 }
 
 fn compute_max_joltage(bank: &str) -> u32 {
-    let mut characters = bank.chars();
-    characters.next_back();
     // find max of the first n - 1 characters
     let length = bank.len();
     let first_m_characters = &bank[..length - 1];
@@ -26,7 +24,7 @@ fn compute_max_joltage(bank: &str) -> u32 {
 fn solution(input: &str) -> u32 {
     let banks: Vec<&str> = input.split_terminator('\n').collect();
     let max_joltages = banks.into_iter()
-        .filter(|x| x.len() > 0)
+        .filter(|x| !x.is_empty())
         .map(compute_max_joltage);
     max_joltages.sum()
 }
