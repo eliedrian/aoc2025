@@ -12,9 +12,10 @@ fn main() {
     let file_path: &str = &args[1];
     let file_content: String = fs::read_to_string(file_path).expect("Unable to read file.");
     solution1(&file_content);
+    solution2(&file_content);
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 struct Grid {
     data: Vec<Vec<char>>,
 }
@@ -66,6 +67,10 @@ impl Grid {
         }).filter(|x| *x != ' ')
         .collect()
     }
+
+    fn remove(&mut self, (i, j): (usize, usize)) {
+        self.data[i][j] = '.';
+    }
 }
 
 fn solution1(input: &str) {
@@ -87,3 +92,48 @@ fn solution1(input: &str) {
     println!("Solution 1 count: {}", counts.count());
 }
 
+fn count_neighbors((pos, n): ((usize, usize), Vec<char>)) -> ((usize, usize), usize) {
+    (pos, n.iter().filter(|&c| *c == '@').count())
+}
+
+fn is_free_roll((_, count): ((usize, usize), &usize)) -> bool {
+    *count < 4_usize
+}
+
+fn solution2(input: &str) {
+    let mut g = Grid::construct(input);
+
+    let row_range = 0..g.row_len();
+    let col_range = 0..g.col_len();
+    let positions = row_range.flat_map(|i| {
+        col_range.clone().map(move |j| { (i, j) })
+    });
+
+    let mut free_rolls: Vec<((usize, usize), usize)> = positions.clone()
+        .filter(|(i, j)| g.index(*i, *j) == '@')
+        .map(|(i, j)| ((i, j), g.neighbors(&i, &j)))
+        .map(count_neighbors)
+        .filter(|(_, count)| *count < 4_usize)
+        .collect();
+
+    let mut total = 0;
+
+    while !free_rolls.is_empty() {
+        total += free_rolls.len();
+        let positions_to_remove = free_rolls.iter().map(|(pos, _)| pos);
+
+        for pos in positions_to_remove {
+            g.remove(*pos);
+        }
+
+        free_rolls = positions.clone()
+            .filter(|(i, j)| g.index(*i, *j) == '@')
+            .map(|(i, j)| ((i, j), g.neighbors(&i, &j)))
+            .map(count_neighbors)
+            .filter(|(_, count)| *count < 4_usize)
+            .collect();
+    }
+
+    println!("Total after removes: {total}");
+
+}
